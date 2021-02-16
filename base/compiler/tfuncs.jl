@@ -1316,15 +1316,17 @@ function tuple_tfunc(atypes::Vector{Any})
     anyinfo = false
     for i in 1:length(atypes)
         x = atypes[i]
-        # TODO ignore singleton Const (don't forget to update cache logic if you implement this)
-        if !anyinfo
-            anyinfo = (!isa(x, Type) && !isvarargtype(x)) || isType(x)
+        if has_nontrivial_const_info(x)
+            anyinfo = true
+        else
+            atypes[i] = x = widenconst(x)
         end
         if isa(x, Const)
             params[i] = typeof(x.val)
         else
             x = widenconst(x)
             if isType(x)
+                anyinfo = true
                 xparam = x.parameters[1]
                 if hasuniquerep(xparam) || xparam === Bottom
                     params[i] = typeof(xparam)
